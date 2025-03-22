@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Check-in NFC Team Building</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #f7f7f7;
+      text-align: center;
+    }
+    .status {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    button {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>Check-in NFC</h1>
+  <p>Premi il pulsante e avvicina un tag NFC</p>
+  <button id="scanBtn">Scansiona Tag</button>
+  <div class="status" id="status"></div>
+
+  <script>
+    const statusDiv = document.getElementById("status");
+    const scanBtn = document.getElementById("scanBtn");
+
+    const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // <-- inserisci qui il tuo URL
+
+    scanBtn.addEventListener("click", async () => {
+      if ("NDEFReader" in window) {
+        const ndef = new NDEFReader();
+        try {
+          await ndef.scan();
+          statusDiv.textContent = "Avvicina il tag NFC...";
+
+          ndef.onreading = async (event) => {
+            const uid = event.serialNumber || "UID non disponibile";
+            statusDiv.textContent = `Tag letto: ${uid}. Invio dati...`;
+
+            try {
+              const response = await fetch(`${scriptURL}?uid=${uid}`);
+              const text = await response.text();
+              statusDiv.textContent = `✅ ${text}`;
+            } catch (err) {
+              statusDiv.textContent = "❌ Errore durante l'invio dei dati.";
+              console.error(err);
+            }
+          };
+        } catch (error) {
+          statusDiv.textContent = `❌ Errore durante la scansione NFC: ${error.message}`;
+          console.error(error);
+        }
+      } else {
+        statusDiv.textContent = "❌ NFC non supportato da questo browser.";
+      }
+    });
+  </script>
+</body>
+</html>
