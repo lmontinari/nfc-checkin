@@ -39,14 +39,14 @@
       background-color: #ffffff;
       border: 1px solid #ccc;
     }
-    .absents {
+    .absents, .checkin-log {
       margin-top: 2rem;
       text-align: left;
       max-width: 400px;
       margin-left: auto;
       margin-right: auto;
     }
-    .absents ul {
+    .absents ul, .checkin-log ul {
       padding-left: 1rem;
       list-style-type: disc;
     }
@@ -68,6 +68,7 @@
 
   <div class="status" id="status"></div>
   <div class="absents" id="absents"></div>
+  <div class="checkin-log" id="checkinLog"></div>
 
   <script>
     const statusDiv = document.getElementById("status");
@@ -75,8 +76,11 @@
     const showAbsentBtn = document.getElementById("showAbsentBtn");
     const activitySelect = document.getElementById("activity");
     const absentsDiv = document.getElementById("absents");
+    const checkinLogDiv = document.getElementById("checkinLog");
 
-    const scriptURL = "https://prod-02.westeurope.logic.azure.com:443/workflows/37d93362a8f8480b8e19ca62e6513f8f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=yUgClpye4amrJZVnz2HqOljfma-6trQBut8nUoXNEAY"; // <-- inserisci qui il tuo URL Power Automate
+    const scriptURL = "https://prod-02.westeurope.logic.azure.com:443/workflows/37d93362a8f8480b8e19ca62e6513f8f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=yUgClpye4amrJZVnz2HqOljfma-6trQBut8nUoXNEAY"; // <-- inserisci qui il tuo URL Power Aut
+
+    let checkinLog = [];
 
     scanBtn.addEventListener("click", async () => {
       const activity = activitySelect.value;
@@ -101,7 +105,14 @@
               });
 
               const result = await response.json();
-              statusDiv.textContent = `✅ ${result.message || "Check-in completato"}${result.nome ? " (" + result.nome + ")" : ""}`;
+              const participantName = result.nome || "Nome non disponibile";
+              const timestamp = new Date().toLocaleTimeString();
+
+              checkinLog.unshift({ name: participantName, time: timestamp, activity });
+              if (checkinLog.length > 5) checkinLog.pop();
+              updateCheckinLog();
+
+              statusDiv.textContent = `✅ ${result.message || "Check-in completato"} (${participantName})`;
             } catch (err) {
               statusDiv.textContent = "❌ Errore durante l'invio dei dati.";
               console.error(err);
@@ -141,6 +152,12 @@
         console.error(err);
       }
     });
+
+    function updateCheckinLog() {
+      checkinLogDiv.innerHTML = "<strong>Check-in Recenti:</strong><ul>" +
+        checkinLog.map(entry => `<li>${entry.time} - ${entry.name} (${entry.activity})</li>`).join("") +
+        "</ul>";
+    }
   </script>
 </body>
 </html>
