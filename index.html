@@ -1,93 +1,80 @@
-Nfc Checkin Webapp
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90
-91
-92
-93
-94
-95
-96
-97
-98
-99
-100
-101
-102
-103
-104
-105
-106
-107
-108
-109
-110
-111
-112
-113
-114
-115
-116
-117
-118
-119
-120
-121
-122
-123
-124
-125
-126
-127
-128
-129
-130
-131
-132
-133
-134
-135
-136
-137
-138
-139
-140
-141
-142
-143
-144
-145
-146
-147
-148
-149
-150
-151
-152
-153
-154
-155
-156
-157
-158
-159
-160
-161
-162
-163
-164
-165
-166
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Check-in NFC Team Building</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #f7f7f7;
+      text-align: center;
+    }
+    .status {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    button, select {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    #showAbsentBtn {
+      background-color: #2196f3;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    select {
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+    }
+    .absents, .checkin-log {
+      margin-top: 2rem;
+      text-align: left;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .absents ul, .checkin-log ul {
+      padding-left: 1rem;
+      list-style-type: disc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Check-in NFC</h1>
+  <p>Seleziona l'attività e avvicina il tag NFC</p>
+
+  <select id="activity">
+    <option value="Scotland Games">Scotland Games</option>
+    <option value="Pechino Express">Pechino Express</option>
+    <option value="Check-in Generale">Check-in Generale</option>
+  </select>
+
+  <br />
+  <button id="scanBtn">Scansiona Tag</button>
+  <button id="showAbsentBtn">Visualizza Assenti</button>
+
+  <div class="status" id="status"></div>
+  <div class="absents" id="absents"></div>
+  <div class="checkin-log" id="checkinLog"></div>
+
+  <script>
+    const statusDiv = document.getElementById("status");
+    const scanBtn = document.getElementById("scanBtn");
+    const showAbsentBtn = document.getElementById("showAbsentBtn");
+    const activitySelect = document.getElementById("activity");
     const absentsDiv = document.getElementById("absents");
     const checkinLogDiv = document.getElementById("checkinLog");
 
@@ -177,4 +164,3 @@ Nfc Checkin Webapp
   </script>
 </body>
 </html>
-
