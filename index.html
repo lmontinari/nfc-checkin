@@ -101,7 +101,7 @@
               });
 
               const result = await response.json();
-              statusDiv.textContent = `✅ ${result.message || "Check-in completato"}`;
+              statusDiv.textContent = `✅ ${result.message || "Check-in completato " || result.nome}`;
             } catch (err) {
               statusDiv.textContent = "❌ Errore durante l'invio dei dati.";
               console.error(err);
