@@ -40,8 +40,7 @@
   <script>
     const statusDiv = document.getElementById("status");
     const scanBtn = document.getElementById("scanBtn");
-
-    const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // <-- inserisci qui il tuo URL
+    const scriptURL = "https://prod-02.westeurope.logic.azure.com:443/workflows/37d93362a8f8480b8e19ca62e6513f8f/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=yUgClpye4amrJZVnz2HqOljfma-6trQBut8nUoXNEAY"; // <-- inserisci qui il tuo URL
 
     scanBtn.addEventListener("click", async () => {
       if ("NDEFReader" in window) {
@@ -55,7 +54,13 @@
             statusDiv.textContent = `Tag letto: ${uid}. Invio dati...`;
 
             try {
-              const response = await fetch(`${scriptURL}?uid=${uid}`);
+              const response = await fetch(scriptURL, {
+                                                method: "POST",
+                                                headers: {
+                                                  "Content-Type": "application/json",
+                                                },
+                                                body: JSON.stringify({ uid }),
+                                              });
               const text = await response.text();
               statusDiv.textContent = `✅ ${text}`;
             } catch (err) {
