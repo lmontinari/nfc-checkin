@@ -110,7 +110,7 @@
 
           statusDiv.textContent = `✅ ${result.message || "Check-in completato"} (${participantName})`;
         } catch (err) {
-          statusDiv.textContent = '❌ Errore durante l'invio dei dati. ${err.message}';
+          statusDiv.textContent = `❌ Errore durante l'invio dei dati. ${err.message}`;
           console.error(err);
         }
       };
