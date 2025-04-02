@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Check-in Diretto</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      text-align: center;
+      background-color: #f0f0f0;
+    }
+    button {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 2rem;
+      font-size: 1rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Check-in Diretto</h1>
+  <button id="checkinBtn">Invia Check-in</button>
+  <div class="status" id="status"></div>
+
+  <script>
+    const checkinURL = "https://95jn88mkl8.execute-api.eu-west-1.amazonaws.com/checkin"; // Sostituisci con il tuo vero endpoint
+    const payload = {
+      uid: "27:5e:da:4f", // Sostituisci con il valore reale
+      activity: "Scotland Games"    // Sostituisci con l'attività desiderata
+    };
+
+    const checkinBtn = document.getElementById("checkinBtn");
+    const statusDiv = document.getElementById("status");
+
+    checkinBtn.addEventListener("click", async () => {
+      statusDiv.textContent = `➡️ Inviando richiesta a ${checkinURL}...`;
+
+      try {
+        const response = await fetch(checkinURL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+        statusDiv.textContent = `✅ Risposta: ${result.message || "OK"}`;
+      } catch (error) {
+        statusDiv.textContent = `❌ Errore: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
