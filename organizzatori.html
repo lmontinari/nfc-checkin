@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Organizzatori</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #4caf50;
+      color: white;
+    }
+    #activitySelect {
+      margin: 1rem 0;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dashboard Organizzatori</h1>
+
+  <label for="activitySelect">Seleziona attività:</label>
+  <select id="activitySelect"></select>
+
+  <table id="participantsTable">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Check-in</th>
+        <th>Orario</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const checkinURL = "https://95jn88mkl8.execute-api.eu-west-1.amazonaws.com/checkin";
+    const activitySelect = document.getElementById("activitySelect");
+    const participantsTable = document.getElementById("participantsTable").querySelector("tbody");
+
+    async function loadActivities() {
+      const res = await fetch(checkinURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ get_activities: true })
+      });
+      const data = await res.json();
+      data.activities.forEach(act => {
+        const opt = document.createElement("option");
+        opt.value = act;
+        opt.textContent = act;
+        activitySelect.appendChild(opt);
+      });
+      if (data.activities.length > 0) {
+        loadParticipants(data.activities[0]);
+      }
+    }
+
+    async function loadParticipants(activity) {
+      const res = await fetch(checkinURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ get_all_status: true, activity })
+      });
+      const data = await res.json();
+      participantsTable.innerHTML = "";
+      data.participants.forEach(p => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${p.nome}</td>
+          <td>${p.checkin ? '✅' : '❌'}</td>
+          <td>${p.timestamp || '-'}</td>
+        `;
+        participantsTable.appendChild(row);
+      });
+    }
+
+    activitySelect.addEventListener("change", () => {
+      const selected = activitySelect.value;
+      loadParticipants(selected);
+    });
+
+    window.addEventListener("DOMContentLoaded", loadActivities);
+  </script>
+</body>
+</html>
