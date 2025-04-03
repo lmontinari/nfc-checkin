@@ -31,6 +31,9 @@
     #showAbsentBtn {
       background-color: #2196f3;
     }
+    #exportCsvBtn {
+      background-color: #f57c00;
+    }
     button:disabled {
       background-color: #cccccc;
       cursor: not-allowed;
@@ -65,15 +68,12 @@
   <h1>Check-in NFC</h1>
   <p>Seleziona l'attività e avvicina il tag NFC</p>
 
-  <select id="activity">
-    <option value="Scotland Games">Scotland Games</option>
-    <option value="Pechino Express">Pechino Express</option>
-    <option value="Check-in Generale">Check-in Generale</option>
-  </select>
+  <select id="activity"></select>
 
   <br />
   <button id="scanBtn">Scansiona Tag</button>
   <button id="showAbsentBtn">Visualizza Assenti</button>
+  <button id="exportCsvBtn">Esporta Assenti in CSV</button>
 
   <div class="status" id="status"></div>
   <div class="absents" id="absents"></div>
@@ -84,16 +84,45 @@
     const statusDiv = document.getElementById("status");
     const scanBtn = document.getElementById("scanBtn");
     const showAbsentBtn = document.getElementById("showAbsentBtn");
+    const exportCsvBtn = document.getElementById("exportCsvBtn");
     const activitySelect = document.getElementById("activity");
     const absentsDiv = document.getElementById("absents");
     const checkinLogDiv = document.getElementById("checkinLog");
     const logRequestDiv = document.getElementById("logRequest");
 
     const checkinURL = "https://95jn88mkl8.execute-api.eu-west-1.amazonaws.com/checkin";
-    const assentiURL = "https://abc123.execute-api.eu-west-1.amazonaws.com/assenti";
 
     let checkinLog = [];
+    let lastAbsents = [];
     let ndef;
+
+    // Carica attività da backend e popola il select
+    async function loadActivities() {
+      try {
+        const response = await fetch(checkinURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ get_activities: true })
+        });
+        const result = await response.json();
+        const savedActivity = localStorage.getItem("selectedActivity");
+        activitySelect.innerHTML = "";
+        result.activities.forEach(activity => {
+          const opt = document.createElement("option");
+          opt.value = activity;
+          opt.textContent = activity;
+          if (activity === savedActivity) opt.selected = true;
+          activitySelect.appendChild(opt);
+        });
+      } catch (err) {
+        alert("❌ Errore nel caricamento delle attività");
+        console.error(err);
+      }
+    }
+
+    activitySelect.addEventListener("change", () => {
+      localStorage.setItem("selectedActivity", activitySelect.value);
+    });
 
     if ("NDEFReader" in window) {
       ndef = new NDEFReader();
@@ -147,20 +176,24 @@
       const activity = activitySelect.value;
       absentsDiv.innerHTML = "Caricamento elenco assenti...";
 
-      const payload = { activity };
-      logRequestDiv.textContent = `➡️ Chiamata a ${assentiURL}\nBody: ${JSON.stringify(payload, null, 2)}`;
+      const payload = { activity, get_absents: true };
+      logRequestDiv.textContent = `➡️ Chiamata a ${checkinURL}\nBody: ${JSON.stringify(payload, null, 2)}`;
 
       try {
-        const response = await fetch(assentiURL, {
+        const response = await fetch(checkinURL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
         });
 
         const result = await response.json();
-        if (result.absents && result.absents.length > 0) {
+        lastAbsents = result.absents || [];
+
+        if (lastAbsents.length > 0) {
           absentsDiv.innerHTML = `<strong>Assenti per \"${activity}\":</strong><ul>` +
-            result.absents.map(name => `<li>${name}</li>`).join("") + "</ul>";
+            lastAbsents.map(name => `<li>${name}</li>`).join("") + "</ul>";
         } else {
           absentsDiv.innerHTML = `✅ Tutti i partecipanti hanno fatto check-in per \"${activity}\"!`;
         }
@@ -170,11 +203,33 @@
       }
     });
 
+    exportCsvBtn.addEventListener("click", () => {
+      if (lastAbsents.length === 0) {
+        alert("Nessun assente da esportare.");
+        return;
+      }
+
+      const activity = activitySelect.value;
+      const csvContent = "Nome\n" + lastAbsents.map(name => `"${name}"`).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `assenti_${activity.replace(/\s+/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
     function updateCheckinLog() {
       checkinLogDiv.innerHTML = "<strong>Check-in Recenti:</strong><ul>" +
         checkinLog.map(entry => `<li>${entry.time} - ${entry.name} (${entry.activity})</li>`).join("") +
         "</ul>";
     }
+
+    // Carica le attività appena la pagina è pronta
+    window.addEventListener("DOMContentLoaded", loadActivities);
   </script>
 </body>
 </html>
