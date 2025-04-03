@@ -1,208 +1,45 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Check-in NFC Team Building</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Building 2025</title>
   <style>
     body {
       font-family: sans-serif;
-      padding: 2rem;
-      background: #f7f7f7;
+      background: #f0f4f8;
       text-align: center;
+      padding: 4rem 2rem;
     }
-    .status {
-      margin-top: 2rem;
-      font-size: 1.2rem;
-      font-weight: bold;
-    }
-    button, select {
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      margin-top: 1rem;
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 2rem;
     }
     button {
+      padding: 1.5rem 2.5rem;
+      margin: 1rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
       background-color: #4caf50;
       color: white;
-      cursor: pointer;
+      transition: background-color 0.3s;
     }
-    #showAbsentBtn {
+    button:hover {
+      background-color: #43a047;
+    }
+    .dashboard {
       background-color: #2196f3;
     }
-    #exportCsvBtn {
-      background-color: #f57c00;
-    }
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-    select {
-      background-color: #ffffff;
-      border: 1px solid #ccc;
-    }
-    .absents, .checkin-log {
-      margin-top: 2rem;
-      text-align: left;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .absents ul, .checkin-log ul {
-      padding-left: 1rem;
-      list-style-type: disc;
-    }
-    .log-request {
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      color: #555;
-      background: #eee;
-      padding: 1rem;
-      border-radius: 8px;
-      word-break: break-word;
+    .dashboard:hover {
+      background-color: #1976d2;
     }
   </style>
 </head>
 <body>
-  <h1>Check-in NFC</h1>
-  <p>Seleziona l'attività e avvicina il tag NFC</p>
-
-  <select id="activity">
-    <option value="Scotland Games">Scotland Games</option>
-    <option value="Pechino Express">Pechino Express</option>
-    <option value="Check-in Generale">Check-in Generale</option>
-  </select>
-
-  <br />
-  <button id="scanBtn">Scansiona Tag</button>
-  <button id="showAbsentBtn">Visualizza Assenti</button>
-  <button id="exportCsvBtn">Esporta Assenti in CSV</button>
-
-  <div class="status" id="status"></div>
-  <div class="absents" id="absents"></div>
-  <div class="checkin-log" id="checkinLog"></div>
-  <div class="log-request" id="logRequest"></div>
-
-  <script>
-    const statusDiv = document.getElementById("status");
-    const scanBtn = document.getElementById("scanBtn");
-    const showAbsentBtn = document.getElementById("showAbsentBtn");
-    const exportCsvBtn = document.getElementById("exportCsvBtn");
-    const activitySelect = document.getElementById("activity");
-    const absentsDiv = document.getElementById("absents");
-    const checkinLogDiv = document.getElementById("checkinLog");
-    const logRequestDiv = document.getElementById("logRequest");
-
-    const checkinURL = "https://95jn88mkl8.execute-api.eu-west-1.amazonaws.com/checkin";
-
-    let checkinLog = [];
-    let lastAbsents = [];
-    let ndef;
-
-    if ("NDEFReader" in window) {
-      ndef = new NDEFReader();
-
-      ndef.onreading = async (event) => {
-        const uid = event.serialNumber || "UID non disponibile";
-        const activity = activitySelect.value;
-        statusDiv.textContent = `Tag letto: ${uid}. Invio dati...`;
-
-        const payload = { uid, activity };
-        logRequestDiv.textContent = `➡️ Chiamata a ${checkinURL}\nBody: ${JSON.stringify(payload, null, 2)}`;
-
-        try {
-          const response = await fetch(checkinURL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          const result = await response.json();
-          const participantName = result.nome || "Nome non disponibile";
-          const timestamp = new Date().toLocaleTimeString();
-
-          checkinLog.unshift({ name: participantName, time: timestamp, activity });
-          if (checkinLog.length > 5) checkinLog.pop();
-          updateCheckinLog();
-
-          statusDiv.textContent = `✅ ${result.message} (${participantName})`;
-        } catch (err) {
-          statusDiv.textContent = "❌ Errore durante l'invio dei dati.";
-          console.error(err);
-        }
-      };
-    }
-
-    scanBtn.addEventListener("click", async () => {
-      if (ndef) {
-        try {
-          await ndef.scan();
-          statusDiv.textContent = "Avvicina il tag NFC...";
-        } catch (error) {
-          statusDiv.textContent = `❌ Errore durante la scansione NFC: ${error.message}`;
-          console.error(error);
-        }
-      } else {
-        statusDiv.textContent = "❌ NFC non supportato da questo browser.";
-      }
-    });
-
-    showAbsentBtn.addEventListener("click", async () => {
-      const activity = activitySelect.value;
-      absentsDiv.innerHTML = "Caricamento elenco assenti...";
-
-      const payload = { activity, get_absents: true };
-      logRequestDiv.textContent = `➡️ Chiamata a ${checkinURL}\nBody: ${JSON.stringify(payload, null, 2)}`;
-
-      try {
-        const response = await fetch(checkinURL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-        lastAbsents = result.absents || [];
-
-        if (lastAbsents.length > 0) {
-          absentsDiv.innerHTML = `<strong>Assenti per \"${activity}\":</strong><ul>` +
-            lastAbsents.map(name => `<li>${name}</li>`).join("") + "</ul>";
-        } else {
-          absentsDiv.innerHTML = `✅ Tutti i partecipanti hanno fatto check-in per \"${activity}\"!`;
-        }
-      } catch (err) {
-        absentsDiv.innerHTML = "❌ Errore durante il recupero degli assenti.";
-        console.error(err);
-      }
-    });
-
-    exportCsvBtn.addEventListener("click", () => {
-      if (lastAbsents.length === 0) {
-        alert("Nessun assente da esportare.");
-        return;
-      }
-
-      const activity = activitySelect.value;
-      const csvContent = "Nome\n" + lastAbsents.map(name => `"${name}"`).join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `assenti_${activity.replace(/\s+/g, '_')}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-
-    function updateCheckinLog() {
-      checkinLogDiv.innerHTML = "<strong>Check-in Recenti:</strong><ul>" +
-        checkinLog.map(entry => `<li>${entry.time} - ${entry.name} (${entry.activity})</li>`).join("") +
-        "</ul>";
-    }
-  </script>
+  <h1>Benvenuto al Team Building 2025</h1>
+  <button onclick="location.href='checkin.html'">🔐 Check-in Partecipanti</button>
+  <button class="dashboard" onclick="location.href='dashboard.html'">📊 Dashboard Organizzatori</button>
 </body>
 </html>
