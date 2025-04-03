@@ -50,6 +50,15 @@
       padding-left: 1rem;
       list-style-type: disc;
     }
+    .log-request {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #555;
+      background: #eee;
+      padding: 1rem;
+      border-radius: 8px;
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
@@ -69,6 +78,7 @@
   <div class="status" id="status"></div>
   <div class="absents" id="absents"></div>
   <div class="checkin-log" id="checkinLog"></div>
+  <div class="log-request" id="logRequest"></div>
 
   <script>
     const statusDiv = document.getElementById("status");
@@ -77,8 +87,9 @@
     const activitySelect = document.getElementById("activity");
     const absentsDiv = document.getElementById("absents");
     const checkinLogDiv = document.getElementById("checkinLog");
+    const logRequestDiv = document.getElementById("logRequest");
 
-    const scriptURL = "https://95jn88mkl8.execute-api.eu-west-1.amazonaws.com/checkin";
+    const checkinURL = "https://abc123.execute-api.eu-west-1.amazonaws.com/checkin";
 
     let checkinLog = [];
     let ndef;
@@ -91,13 +102,14 @@
         const activity = activitySelect.value;
         statusDiv.textContent = `Tag letto: ${uid}. Invio dati...`;
 
+        const payload = { uid, activity };
+        logRequestDiv.textContent = `➡️ Chiamata a ${checkinURL}\nBody: ${JSON.stringify(payload, null, 2)}`;
+
         try {
-          const response = await fetch(scriptURL, {
+          const response = await fetch(checkinURL, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ uid, activity }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
           });
 
           const result = await response.json();
@@ -108,9 +120,9 @@
           if (checkinLog.length > 5) checkinLog.pop();
           updateCheckinLog();
 
-          statusDiv.textContent = `✅ ${result.message || "Check-in completato"} (${participantName})`;
+          statusDiv.textContent = `✅ ${result.message} (${participantName})`;
         } catch (err) {
-          statusDiv.textContent = `❌ Errore durante l'invio dei datiiiiiaaaiii: ${err.name}`;
+          statusDiv.textContent = "❌ Errore durante l'invio dei dati.";
           console.error(err);
         }
       };
@@ -134,22 +146,24 @@
       const activity = activitySelect.value;
       absentsDiv.innerHTML = "Caricamento elenco assenti...";
 
+      const payload = { activity, get_absents: true };
+      logRequestDiv.textContent = `➡️ Chiamata a ${checkinURL}\nBody: ${JSON.stringify(payload, null, 2)}`;
+
       try {
-        
-        const response = await fetch(scriptURL, {
+        const response = await fetch(checkinURL, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/json"
           },
-          body: JSON.stringify({ activity, get_absents: true }),
+          body: JSON.stringify(payload)
         });
 
         const result = await response.json();
         if (result.absents && result.absents.length > 0) {
-          absentsDiv.innerHTML = `<strong>Assenti per "${activity}":</strong><ul>` +
+          absentsDiv.innerHTML = `<strong>Assenti per \"${activity}\":</strong><ul>` +
             result.absents.map(name => `<li>${name}</li>`).join("") + "</ul>";
         } else {
-          absentsDiv.innerHTML = `✅ Tutti i partecipanti hanno fatto check-in per "${activity}"!`;
+          absentsDiv.innerHTML = `✅ Tutti i partecipanti hanno fatto check-in per \"${activity}\"!`;
         }
       } catch (err) {
         absentsDiv.innerHTML = "❌ Errore durante il recupero degli assenti.";
