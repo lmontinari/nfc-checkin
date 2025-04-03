@@ -31,6 +31,9 @@
     #showAbsentBtn {
       background-color: #2196f3;
     }
+    #stopScanBtn {
+      background-color: #9e9e9e;
+    }
     #exportCsvBtn {
       background-color: #f57c00;
     }
@@ -76,6 +79,40 @@
     <option value="Check-in Generale">Check-in Generale</option>
   </select>
 
+  <script>
+    // Carica attività dinamicamente
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const response = await fetch(checkinURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ get_activities: true })
+        });
+
+        const data = await response.json();
+        const savedActivity = localStorage.getItem("selectedActivity");
+
+        activitySelect.innerHTML = "";
+        data.activities.forEach(att => {
+          const opt = document.createElement("option");
+          opt.value = att;
+          opt.textContent = att;
+          if (att === savedActivity) opt.selected = true;
+          activitySelect.appendChild(opt);
+        });
+
+        activitySelect.addEventListener("change", () => {
+          localStorage.setItem("selectedActivity", activitySelect.value);
+        });
+      } catch (error) {
+        console.error("Errore nel caricamento delle attività:", error);
+        activitySelect.innerHTML = '<option value="">Errore nel caricamento attività</option>';
+        statusDiv.textContent = "❌ Errore nel caricamento della lista attività.";
+      }
+    });
+  </script>
+
+  
   <br />
   <button id="scanBtn">Scansiona Tag</button>
   <button id="stopScanBtn">Stop Lettura</button>
