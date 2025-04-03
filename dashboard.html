@@ -32,6 +32,17 @@
       padding: 0.5rem;
       font-size: 1rem;
     }
+    button.delete {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button.delete:hover {
+      background-color: #d32f2f;
+    }
   </style>
 </head>
 <body>
@@ -46,6 +57,7 @@
         <th>Nome</th>
         <th>Check-in</th>
         <th>Orario</th>
+        <th>Azione</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -88,9 +100,29 @@
           <td>${p.nome}</td>
           <td>${p.checkin ? '✅' : '❌'}</td>
           <td>${p.timestamp || '-'}</td>
+          <td>
+            ${p.checkin ? `<button class="delete" onclick="deleteCheckin('${p.id}', '${activity}')">Cancella</button>` : ''}
+          </td>
         `;
         participantsTable.appendChild(row);
       });
+    }
+
+    async function deleteCheckin(participantId, activity) {
+      if (!confirm("Sei sicuro di voler cancellare questo check-in?")) return;
+
+      const res = await fetch(checkinURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ delete_checkin: true, participant_id: participantId, activity })
+      });
+
+      if (res.ok) {
+        alert("Check-in cancellato con successo.");
+        loadParticipants(activity);
+      } else {
+        alert("Errore nella cancellazione del check-in.");
+      }
     }
 
     activitySelect.addEventListener("change", () => {
