@@ -78,6 +78,7 @@
 
   <br />
   <button id="scanBtn">Scansiona Tag</button>
+  <button id="stopScanBtn">Stop Lettura</button>
   <button id="showAbsentBtn">Visualizza Assenti</button>
   <button id="exportCsvBtn">Esporta Assenti in CSV</button>
 
@@ -153,6 +154,14 @@
       }
     });
 
+    stopScanBtn.addEventListener("click", () => {
+      if (ndef) {
+        ndef.onreading = null;
+        statusDiv.textContent = "🛑 Lettore NFC disattivato";
+      }
+    });
+
+    
     showAbsentBtn.addEventListener("click", async () => {
       const activity = activitySelect.value;
       absentsDiv.innerHTML = "Caricamento elenco assenti...";
