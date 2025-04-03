@@ -16,7 +16,7 @@
       font-size: 1.2rem;
       font-weight: bold;
     }
-    button, select {
+    button, select, input {
       padding: 1rem 2rem;
       font-size: 1rem;
       border: none;
@@ -34,9 +34,11 @@
     #exportCsvBtn {
       background-color: #f57c00;
     }
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
+    #filterInput {
+      margin-top: 2rem;
+      padding: 0.5rem;
+      width: 300px;
+      font-size: 1rem;
     }
     select {
       background-color: #ffffff;
@@ -79,8 +81,9 @@
   <button id="showAbsentBtn">Visualizza Assenti</button>
   <button id="exportCsvBtn">Esporta Assenti in CSV</button>
 
+  <input type="text" id="filterInput" placeholder="Filtra per nome o cognome" />
+
   <div class="status" id="status"></div>
-  <input type="text" id="filterInput" placeholder="Filtra per nome o cognome" style="margin-top: 2rem; padding: 0.5rem; width: 300px; font-size: 1rem;">
   <div class="absents" id="absents"></div>
   <div class="checkin-log" id="checkinLog"></div>
   <div class="log-request" id="logRequest"></div>
@@ -94,6 +97,7 @@
     const absentsDiv = document.getElementById("absents");
     const checkinLogDiv = document.getElementById("checkinLog");
     const logRequestDiv = document.getElementById("logRequest");
+    const filterInput = document.getElementById("filterInput");
 
     const checkinURL = "https://95jn88mkl8.execute-api.eu-west-1.amazonaws.com/checkin";
 
@@ -149,11 +153,6 @@
       }
     });
 
-<!-- HTML CONTENUTO MANTENUTO INVARIATO -->
-
-<script>
-// (precedente codice JS invariato fino a showAbsentBtn.addEventListener)
-
     showAbsentBtn.addEventListener("click", async () => {
       const activity = activitySelect.value;
       absentsDiv.innerHTML = "Caricamento elenco assenti...";
@@ -172,26 +171,34 @@
 
         const result = await response.json();
         lastAbsents = result.absents || [];
-
-        if (lastAbsents.length > 0) {
-          absentsDiv.innerHTML = `<strong>Assenti per \"${activity}\":</strong><ul>` +
-            lastAbsents
-              .filter(p => {
-                const term = document.getElementById("filterInput").value.toLowerCase();
-                return p.cognome.toLowerCase().includes(term) || p.nome.toLowerCase().includes(term);
-              })
-              .sort((a, b) => a.cognome.localeCompare(b.cognome))
-              .map(p => `<li><strong>${p.cognome}</strong> ${p.nome} – ${p.telefono}</li>`)
-              .join("") +
-            "</ul>";
-        } else {
-          absentsDiv.innerHTML = `✅ Tutti i partecipanti hanno fatto check-in per \"${activity}\"!`;
-        }
+        renderAbsentsList(activity);
       } catch (err) {
         absentsDiv.innerHTML = "❌ Errore durante il recupero degli assenti.";
         console.error(err);
       }
     });
+
+    filterInput.addEventListener("input", () => {
+      const activity = activitySelect.value;
+      renderAbsentsList(activity);
+    });
+
+    function renderAbsentsList(activity) {
+      if (lastAbsents.length > 0) {
+        const filtered = lastAbsents.filter(p => {
+          const term = filterInput.value.toLowerCase();
+          return p.cognome.toLowerCase().includes(term) || p.nome.toLowerCase().includes(term);
+        });
+        absentsDiv.innerHTML = `<strong>Assenti per \"${activity}\":</strong><ul>` +
+          filtered
+            .sort((a, b) => a.cognome.localeCompare(b.cognome))
+            .map(p => `<li><strong>${p.cognome}</strong> ${p.nome} – ${p.telefono}</li>`) 
+            .join("") +
+          "</ul>";
+      } else {
+        absentsDiv.innerHTML = `✅ Tutti i partecipanti hanno fatto check-in per \"${activity}\"!`;
+      }
+    }
 
     exportCsvBtn.addEventListener("click", () => {
       if (lastAbsents.length === 0) {
@@ -215,6 +222,7 @@
       link.click();
       document.body.removeChild(link);
     });
+
     function updateCheckinLog() {
       checkinLogDiv.innerHTML = "<strong>Check-in Recenti:</strong><ul>" +
         checkinLog.map(entry => `<li>${entry.time} - ${entry.name} (${entry.activity})</li>`).join("") +
