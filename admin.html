@@ -102,6 +102,13 @@
     }
 
     async function addPartecipante() {
+      const requiredFields = ["nome", "cognome", "nickname", "sede", "bu", "uid", "email", "telefono"];
+      const missing = requiredFields.filter(id => !document.getElementById(id).value.trim());
+      if (missing.length > 0) {
+        alert("Per favore compila tutti i campi obbligatori: " + missing.join(", "));
+        return;
+      }
+
       const payload = {
         add_participant: true,
         nome: document.getElementById("nome").value,
