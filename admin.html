@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Gestione Partecipanti e Attività</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      padding: 2rem;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    section {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    label, input, button, select {
+      display: block;
+      margin: 0.5rem auto;
+      padding: 0.5rem;
+      width: 90%;
+      max-width: 400px;
+      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      margin-top: 1rem;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+    }
+    button.delete {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Team Building 2025</h1>
+
+  <section>
+    <h2>Aggiungi Partecipante</h2>
+    <input type="text" id="newName" placeholder="Nome" required />
+    <input type="text" id="newUID" placeholder="UID (tag NFC)" required />
+    <button onclick="addPartecipante()">➕ Aggiungi Partecipante</button>
+    <table id="partecipantiTable">
+      <thead><tr><th>Nome</th><th>UID</th><th>Azioni</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Aggiungi Attività</h2>
+    <input type="text" id="newAttivita" placeholder="Nome Attività" required />
+    <button onclick="addAttivita()">➕ Aggiungi Attività</button>
+    <table id="attivitaTable">
+      <thead><tr><th>Attività</th><th>Azioni</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <script>
+    const apiURL = "https://95jn88mkl8.execute-api.eu-west-1.amazonaws.com/checkin";
+
+    async function loadPartecipanti() {
+      const res = await fetch(apiURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ get_all_participants: true })
+      });
+      const data = await res.json();
+      const table = document.querySelector("#partecipantiTable tbody");
+      table.innerHTML = "";
+      data.participants.forEach(p => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${p.nome}</td><td>${p.uid}</td><td><button class='delete' onclick="deletePartecipante('${p.uid}')">Elimina</button></td>`;
+        table.appendChild(row);
+      });
+    }
+
+    async function addPartecipante() {
+      const nome = document.getElementById("newName").value.trim();
+      const uid = document.getElementById("newUID").value.trim();
+      if (!nome || !uid) return alert("Inserisci nome e UID");
+      await fetch(apiURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ add_participant: true, nome, uid })
+      });
+      document.getElementById("newName").value = "";
+      document.getElementById("newUID").value = "";
+      loadPartecipanti();
+    }
+
+    async function deletePartecipante(uid) {
+      if (!confirm("Eliminare questo partecipante?")) return;
+      await fetch(apiURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ delete_participant: true, uid })
+      });
+      loadPartecipanti();
+    }
+
+    async function loadAttivita() {
+      const res = await fetch(apiURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ get_activities: true })
+      });
+      const data = await res.json();
+      const table = document.querySelector("#attivitaTable tbody");
+      table.innerHTML = "";
+      data.activities.forEach(a => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${a}</td><td><button class='delete' onclick="deleteAttivita('${a}')">Elimina</button></td>`;
+        table.appendChild(row);
+      });
+    }
+
+    async function addAttivita() {
+      const nome = document.getElementById("newAttivita").value.trim();
+      if (!nome) return alert("Inserisci il nome dell'attività");
+      await fetch(apiURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ add_activity: true, nome })
+      });
+      document.getElementById("newAttivita").value = "";
+      loadAttivita();
+    }
+
+    async function deleteAttivita(nome) {
+      if (!confirm("Eliminare questa attività?")) return;
+      await fetch(apiURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ delete_activity: true, nome })
+      });
+      loadAttivita();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadPartecipanti();
+      loadAttivita();
+    });
+  </script>
+</body>
+</html>
