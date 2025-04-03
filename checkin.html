@@ -189,9 +189,10 @@
           const term = filterInput.value.toLowerCase();
           return p.cognome.toLowerCase().includes(term) || p.nome.toLowerCase().includes(term);
         });
-        absentsDiv.innerHTML = `<strong>Assenti per \"${activity}\":</strong><ul>` +
-          filtered
-            .sort((a, b) => a.cognome.localeCompare(b.cognome))
+        absentsDiv.innerHTML = `<strong>Assenti per \"${activity}\":</strong><br><span id='assentiCount'></span><ul>` +
+          document.getElementById('assentiCount').textContent = `Totale: ${filtered.length}`;
+        filtered
+          .sort((a, b) => a.cognome.localeCompare(b.cognome))
             .map(p => `<li><strong>${p.cognome}</strong> ${p.nome} – ${p.telefono}</li>`) 
             .join("") +
           "</ul>";
