@@ -80,6 +80,7 @@
   <button id="exportCsvBtn">Esporta Assenti in CSV</button>
 
   <div class="status" id="status"></div>
+  <input type="text" id="filterInput" placeholder="Filtra per nome o cognome" style="margin-top: 2rem; padding: 0.5rem; width: 300px; font-size: 1rem;">
   <div class="absents" id="absents"></div>
   <div class="checkin-log" id="checkinLog"></div>
   <div class="log-request" id="logRequest"></div>
@@ -148,6 +149,11 @@
       }
     });
 
+<!-- HTML CONTENUTO MANTENUTO INVARIATO -->
+
+<script>
+// (precedente codice JS invariato fino a showAbsentBtn.addEventListener)
+
     showAbsentBtn.addEventListener("click", async () => {
       const activity = activitySelect.value;
       absentsDiv.innerHTML = "Caricamento elenco assenti...";
@@ -169,7 +175,15 @@
 
         if (lastAbsents.length > 0) {
           absentsDiv.innerHTML = `<strong>Assenti per \"${activity}\":</strong><ul>` +
-            lastAbsents.map(name => `<li>${name}</li>`).join("") + "</ul>";
+            lastAbsents
+              .filter(p => {
+                const term = document.getElementById("filterInput").value.toLowerCase();
+                return p.cognome.toLowerCase().includes(term) || p.nome.toLowerCase().includes(term);
+              })
+              .sort((a, b) => a.cognome.localeCompare(b.cognome))
+              .map(p => `<li><strong>${p.cognome}</strong> ${p.nome} – ${p.telefono}</li>`)
+              .join("") +
+            "</ul>";
         } else {
           absentsDiv.innerHTML = `✅ Tutti i partecipanti hanno fatto check-in per \"${activity}\"!`;
         }
@@ -186,7 +200,11 @@
       }
 
       const activity = activitySelect.value;
-      const csvContent = "Nome\n" + lastAbsents.map(name => `"${name}"`).join("\n");
+      const csvContent = "Cognome,Nome,Telefono\n" +
+        lastAbsents
+          .sort((a, b) => a.cognome.localeCompare(b.cognome))
+          .map(p => `${p.cognome},${p.nome},${p.telefono}`)
+          .join("\n");
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
 
@@ -197,7 +215,6 @@
       link.click();
       document.body.removeChild(link);
     });
-
     function updateCheckinLog() {
       checkinLogDiv.innerHTML = "<strong>Check-in Recenti:</strong><ul>" +
         checkinLog.map(entry => `<li>${entry.time} - ${entry.name} (${entry.activity})</li>`).join("") +
