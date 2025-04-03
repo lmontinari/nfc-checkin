@@ -20,12 +20,12 @@
       margin-bottom: 2rem;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
-    label, input, button, select {
+    label, input, button, select, textarea {
       display: block;
       margin: 0.5rem auto;
       padding: 0.5rem;
       width: 90%;
-      max-width: 400px;
+      max-width: 500px;
       font-size: 1rem;
     }
     table {
@@ -52,8 +52,19 @@
 
   <section>
     <h2>Aggiungi Partecipante</h2>
-    <input type="text" id="newName" placeholder="Nome" required />
-    <input type="text" id="newUID" placeholder="UID (tag NFC)" required />
+    <input id="nome" placeholder="Nome" />
+    <input id="cognome" placeholder="Cognome" />
+    <input id="nickname" placeholder="Nickname" />
+    <input id="sede" placeholder="Sede" />
+    <input id="bu" placeholder="BU" />
+    <input id="uid" placeholder="UID (tag NFC)" />
+    <input id="email" placeholder="Email" />
+    <input id="telefono" placeholder="Telefono" />
+    <input id="coinquilino" placeholder="Coinquilino (opzionale)" />
+    <input id="sesso" placeholder="Sesso (opzionale)" />
+    <input id="taglia" placeholder="Taglia (opzionale)" />
+    <input id="viaggio" placeholder="Viaggio prenotato (opzionale)" />
+    <textarea id="note" placeholder="Note (opzionali)"></textarea>
     <button onclick="addPartecipante()">➕ Aggiungi Partecipante</button>
     <table id="partecipantiTable">
       <thead><tr><th>Nome</th><th>UID</th><th>Azioni</th></tr></thead>
@@ -91,16 +102,28 @@
     }
 
     async function addPartecipante() {
-      const nome = document.getElementById("newName").value.trim();
-      const uid = document.getElementById("newUID").value.trim();
-      if (!nome || !uid) return alert("Inserisci nome e UID");
+      const payload = {
+        add_participant: true,
+        nome: document.getElementById("nome").value,
+        cognome: document.getElementById("cognome").value,
+        nickname: document.getElementById("nickname").value,
+        sede: document.getElementById("sede").value,
+        bu: document.getElementById("bu").value,
+        uid: document.getElementById("uid").value,
+        email: document.getElementById("email").value,
+        telefono: document.getElementById("telefono").value,
+        coinquilino: document.getElementById("coinquilino").value,
+        sesso: document.getElementById("sesso").value,
+        taglia: document.getElementById("taglia").value,
+        viaggio_prenotato: document.getElementById("viaggio").value,
+        note: document.getElementById("note").value
+      };
       await fetch(apiURL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ add_participant: true, nome, uid })
+        body: JSON.stringify(payload)
       });
-      document.getElementById("newName").value = "";
-      document.getElementById("newUID").value = "";
+      document.querySelectorAll("input, textarea").forEach(e => e.value = "");
       loadPartecipanti();
     }
 
