@@ -31,6 +31,9 @@
     #showAbsentBtn {
       background-color: #2196f3;
     }
+    #exportCsvBtn {
+      background-color: #f57c00;
+    }
     button:disabled {
       background-color: #cccccc;
       cursor: not-allowed;
@@ -74,6 +77,7 @@
   <br />
   <button id="scanBtn">Scansiona Tag</button>
   <button id="showAbsentBtn">Visualizza Assenti</button>
+  <button id="exportCsvBtn">Esporta Assenti in CSV</button>
 
   <div class="status" id="status"></div>
   <div class="absents" id="absents"></div>
@@ -84,14 +88,16 @@
     const statusDiv = document.getElementById("status");
     const scanBtn = document.getElementById("scanBtn");
     const showAbsentBtn = document.getElementById("showAbsentBtn");
+    const exportCsvBtn = document.getElementById("exportCsvBtn");
     const activitySelect = document.getElementById("activity");
     const absentsDiv = document.getElementById("absents");
     const checkinLogDiv = document.getElementById("checkinLog");
     const logRequestDiv = document.getElementById("logRequest");
 
-    const checkinURL = "https://abc123.execute-api.eu-west-1.amazonaws.com/checkin";
+    const checkinURL = "https://95jn88mkl8.execute-api.eu-west-1.amazonaws.com/checkin";
 
     let checkinLog = [];
+    let lastAbsents = [];
     let ndef;
 
     if ("NDEFReader" in window) {
@@ -159,9 +165,11 @@
         });
 
         const result = await response.json();
-        if (result.absents && result.absents.length > 0) {
+        lastAbsents = result.absents || [];
+
+        if (lastAbsents.length > 0) {
           absentsDiv.innerHTML = `<strong>Assenti per \"${activity}\":</strong><ul>` +
-            result.absents.map(name => `<li>${name}</li>`).join("") + "</ul>";
+            lastAbsents.map(name => `<li>${name}</li>`).join("") + "</ul>";
         } else {
           absentsDiv.innerHTML = `✅ Tutti i partecipanti hanno fatto check-in per \"${activity}\"!`;
         }
@@ -169,6 +177,25 @@
         absentsDiv.innerHTML = "❌ Errore durante il recupero degli assenti.";
         console.error(err);
       }
+    });
+
+    exportCsvBtn.addEventListener("click", () => {
+      if (lastAbsents.length === 0) {
+        alert("Nessun assente da esportare.");
+        return;
+      }
+
+      const activity = activitySelect.value;
+      const csvContent = "Nome\n" + lastAbsents.map(name => `"${name}"`).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `assenti_${activity.replace(/\s+/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     });
 
     function updateCheckinLog() {
