@@ -28,7 +28,7 @@
       background-color: #4caf50;
       color: white;
     }
-    #activitySelect {
+    #activitySelect, #filterInput {
       margin: 1rem 0;
       padding: 0.5rem;
       font-size: 1rem;
@@ -57,12 +57,14 @@
 
   <label for="activitySelect">Seleziona attività:</label>
   <select id="activitySelect"></select>
+  <input type="text" id="filterInput" placeholder="Filtra per nome o cognome">
 
   <table id="participantsTable">
     <thead>
       <tr>
         <th onclick="sortTable(0)">Cognome</th>
         <th onclick="sortTable(1)">Nome</th>
+        <th>Telefono</th>
         <th>Check-in</th>
         <th>Orario</th>
         <th>Telefono</th>
@@ -76,6 +78,7 @@
     const checkinURL = "https://95jn88mkl8.execute-api.eu-west-1.amazonaws.com/checkin";
     const activitySelect = document.getElementById("activitySelect");
     const participantsTable = document.getElementById("participantsTable").querySelector("tbody");
+    const filterInput = document.getElementById("filterInput");
 
     async function loadActivities() {
       const res = await fetch(checkinURL, {
@@ -102,12 +105,17 @@
         body: JSON.stringify({ get_all_status: true, activity })
       });
       const data = await res.json();
+      const term = filterInput.value.toLowerCase();
+      const filtered = data.participants.filter(p =>
+        p.nome.toLowerCase().includes(term) || (p.cognome || "").toLowerCase().includes(term)
+      );
       participantsTable.innerHTML = "";
-      data.participants.forEach(p => {
+      filtered.forEach(p => {
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${p.cognome || ""}</td>
           <td>${p.nome}</td>
+          <td><a href="tel:${p.telefono}">${p.telefono}</a></td>
           <td>${p.checkin ? '✅' : '❌'}</td>
           <td>${p.timestamp || '-'}</td>
           <td><a href="tel:${p.telefono}">${p.telefono}</a></td>
@@ -148,6 +156,11 @@
     }
 
     activitySelect.addEventListener("change", () => {
+      const selected = activitySelect.value;
+      loadParticipants(selected);
+    });
+
+    filterInput.addEventListener("input", () => {
       const selected = activitySelect.value;
       loadParticipants(selected);
     });
