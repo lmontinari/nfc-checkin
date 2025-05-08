@@ -67,7 +67,6 @@
         <th>Telefono</th>
         <th>Check-in</th>
         <th>Orario</th>
-        <th>Telefono</th>
         <th>Azione</th>
       </tr>
     </thead>
@@ -118,7 +117,6 @@
           <td><a href="tel:${p.telefono}">${p.telefono}</a></td>
           <td>${p.checkin ? '✅' : '❌'}</td>
           <td>${p.timestamp || '-'}</td>
-          <td><a href="tel:${p.telefono}">${p.telefono}</a></td>
           <td>
             ${p.checkin ? `<button class="delete" onclick="deleteCheckin('${p.id}', '${activity}')">Cancella</button>` : ''}
           </td>
