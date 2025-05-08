@@ -22,6 +22,7 @@
       padding: 0.75rem;
       border: 1px solid #ddd;
       text-align: left;
+      cursor: pointer;
     }
     th {
       background-color: #4caf50;
@@ -43,10 +44,16 @@
     button.delete:hover {
       background-color: #d32f2f;
     }
+    #homeBtn {
+      background-color: #9e9e9e;
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
   <h1>Dashboard Organizzatori</h1>
+
+  <button id="homeBtn" onclick="location.href='index.html'">🏠 Torna alla Home</button>
 
   <label for="activitySelect">Seleziona attività:</label>
   <select id="activitySelect"></select>
@@ -54,7 +61,8 @@
   <table id="participantsTable">
     <thead>
       <tr>
-        <th>Nome</th>
+        <th onclick="sortTable(0)">Cognome</th>
+        <th onclick="sortTable(1)">Nome</th>
         <th>Check-in</th>
         <th>Orario</th>
         <th>Azione</th>
@@ -97,6 +105,7 @@
       data.participants.forEach(p => {
         const row = document.createElement("tr");
         row.innerHTML = `
+          <td>${p.cognome || ""}</td>
           <td>${p.nome}</td>
           <td>${p.checkin ? '✅' : '❌'}</td>
           <td>${p.timestamp || '-'}</td>
@@ -123,6 +132,17 @@
       } else {
         alert("Errore nella cancellazione del check-in.");
       }
+    }
+
+    function sortTable(colIndex) {
+      const rows = Array.from(participantsTable.rows);
+      const sorted = rows.sort((a, b) => {
+        const textA = a.cells[colIndex].innerText.toLowerCase();
+        const textB = b.cells[colIndex].innerText.toLowerCase();
+        return textA.localeCompare(textB);
+      });
+      participantsTable.innerHTML = "";
+      sorted.forEach(row => participantsTable.appendChild(row));
     }
 
     activitySelect.addEventListener("change", () => {
